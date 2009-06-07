@@ -25,13 +25,14 @@ else:
     ipod = args[0]
 
 try:
-    db = gpod.Database(ipod, local=True)
+    db = gpod.Database(ipod)
 except gpod.ipod.DatabaseException:
     parser.error("Invalid iPod path or error loading the iPod.")
 
 print "iPod database loaded, checking songs..."
-
+x = -1
 for track in db:
+    x += 1
     print "Processing " + track['artist'] + " - " + track['title'] + '...',
     if track.get_coverart():
         print "Cover art already found, skipping."
@@ -45,15 +46,15 @@ for track in db:
             print "No embedded cover art found, skipping."
             continue
         image = tag.getImages()[0]
-        image.writeFile('/tmp/cover.jpg')
+        image.writeFile('/tmp', name=str(x)+'.jpg')
         try:
-            track.set_coverart_from_file('/tmp/cover.jpg')
+            track.set_coverart_from_file('/tmp/'+str(x)+'.jpg')
+            db.copy_delayed_files()
         except TypeError:
             pass    # This seems to happen and seems to be harmless.
         print 'Done.'
 
 print "All songs processed, saving database..."
-db.copy_delayed_files()
 db.close()
 
 print "All done."
