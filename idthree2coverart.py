@@ -14,9 +14,13 @@
 import optparse
 import eyeD3
 import gpod
+import os
+import tempfile
 
-usage = "usage: %prog <mounted_ipod_directory>"
+usage = "usage: %prog [-f] <mounted_ipod_directory>"
 parser = optparse.OptionParser(usage)
+parser.add_option('-f', '--force', action='store_true', dest='force',
+                    help='Ignore existing iPod artwork, resetting all from ID3')
 (options, args) = parser.parse_args()
 
 if len(args) != 1:
@@ -30,12 +34,19 @@ except gpod.ipod.DatabaseException:
     parser.error("Invalid iPod path or error loading the iPod.")
 
 print "iPod database loaded, checking songs..."
+
+tempdir = tempfile.mkdtemp()
+files = []
+
 x = -1
 for track in db:
     x += 1
-    print "Processing " + track['artist'] + " - " + track['title'] + '...',
-    if track.get_coverart():
-        print "Cover art already found, skipping."
+    
+    print "Processing " + track['artist'] + " - " + track['title'],
+    print '(' + str(x) + ' of ' + str(len(db)) + ')...',
+    
+    if track.get_coverart() and not options.force:
+        print "Cover art already found and -f not specified, skipping."
         continue
     else:
         tag = eyeD3.Tag()
@@ -46,7 +57,8 @@ for track in db:
             print "No embedded cover art found, skipping."
             continue
         image = tag.getImages()[0]
-        image.writeFile('/tmp', name=str(x)+'.jpg')
+        image.writeFile(tempdir, name=str(x) + '.jpg')
+        files.append(tempdir + '/' + str(x) + '.jpg')
         try:
             track.set_coverart_from_file('/tmp/'+str(x)+'.jpg')
             db.copy_delayed_files()
@@ -57,4 +69,8 @@ for track in db:
 print "All songs processed, saving database..."
 db.close()
 
+print "Tidying up..."
+for f in files:
+    os.remove(f)
+os.rmdir(tempdir)
 print "All done."
