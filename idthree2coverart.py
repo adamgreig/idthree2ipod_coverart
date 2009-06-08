@@ -58,12 +58,11 @@ for track in db:
             continue
         image = tag.getImages()[0]
         image.writeFile(tempdir, name=str(x) + '.jpg')
-        files.append(tempdir + '/' + str(x) + '.jpg')
-        try:
-            track.set_coverart_from_file(u"%s/%s.jpg" % (tempdir, unicode(x)))
-            db.copy_delayed_files()
-        except TypeError:
-            pass    # This seems to happen and seems to be harmless.
+        filename = "%s/%s.jpg" % (tempdir, str(x))
+        files.append(filename)
+        track['userdata']['charset'] = 'UTF-8'
+        track.set_coverart_from_file(filename)
+        db.copy_delayed_files()
         print 'Done.'
 
 print "All songs processed, saving database..."
