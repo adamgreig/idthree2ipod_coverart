@@ -43,7 +43,7 @@ for track in db:
     x += 1
     
     print "Processing " + track['artist'] + " - " + track['title'],
-    print '(' + str(x) + ' of ' + str(len(db)) + ')...',
+    print '(' + str(x+1) + ' of ' + str(len(db)) + ')...',
     
     if track.get_coverart() and not options.force:
         print "Cover art already found and -f not specified, skipping."
@@ -60,7 +60,7 @@ for track in db:
         image.writeFile(tempdir, name=str(x) + '.jpg')
         files.append(tempdir + '/' + str(x) + '.jpg')
         try:
-            track.set_coverart_from_file('/tmp/'+str(x)+'.jpg')
+            track.set_coverart_from_file(u"%s/%s.jpg" % (tempdir, unicode(x)))
             db.copy_delayed_files()
         except TypeError:
             pass    # This seems to happen and seems to be harmless.
